@@ -1,0 +1,47 @@
+version: "2.40"
+
+volumes:
+  pg_data:
+  static:
+
+networks:
+  taski_network:
+
+services:
+  db:
+    image: postgres:13.10
+    env_file: .env
+    volumes:
+      - pg_data:/var/lib/postgresql/data
+    networks:
+      - taski_network
+
+  backend:
+    build: ./backend/
+    env_file: .env
+    depends_on:
+      - db
+    networks:
+      - taski_network
+    volumes:
+      - static:/backend_static
+
+  frontend:
+    build: ./frontend/
+    env_file: .env
+    networks:
+      - taski_network
+    command: cp -r /app/build/. /frontend_static/
+    volumes:
+     - static:/frontend_static
+
+  gateway:
+    build: ./gateway/
+    ports:
+      - 8000:80
+    depends_on:
+      - backend
+    networks:
+      - taski_network
+    volumes:
+      - static:/staticfiles
